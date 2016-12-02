@@ -86,7 +86,7 @@ class QueueWorkerTest extends PHPUnit_Framework_TestCase
         $this->events->shouldNotHaveReceived('fire', [Mockery::type(JobProcessed::class)]);
     }
 
-    public function test_job_is_not_released_if_it_has_exceeded_max_attempts()
+    public function test_job_is_failed_if_it_has_exceeded_max_attempts()
     {
         $e = new RuntimeException;
 
@@ -103,8 +103,8 @@ class QueueWorkerTest extends PHPUnit_Framework_TestCase
 
         $this->assertNull($job->releaseAfter);
         $this->assertTrue($job->deleted);
-        $this->assertEquals($e, $job->failedWith);
-        $this->exceptionHandler->shouldHaveReceived('report')->with($e);
+        $this->assertEquals(MaxAttemptsExceededException::class, $job->failedWith);
+        $this->exceptionHandler->shouldHaveReceived('report')->with(Mockery::type(MaxAttemptsExceededException::class));
         $this->events->shouldHaveReceived('fire')->with(Mockery::type(JobExceptionOccurred::class))->once();
         $this->events->shouldHaveReceived('fire')->with(Mockery::type(JobFailed::class))->once();
         $this->events->shouldNotHaveReceived('fire', [Mockery::type(JobProcessed::class)]);
